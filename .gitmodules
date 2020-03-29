@@ -1,0 +1,3 @@
+[submodule "ext/oidos"]
+	path = ext/oidos
+	url = git@github.com:crioux/Oidos

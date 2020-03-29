@@ -115,6 +115,12 @@ export interface IShaderMinifier {
 	minify(definition: IShaderDefinition): Promise<void>;
 }
 
+export interface ICodeValidator {
+	getDefaultConfig(): object;
+	checkConfig(): void;
+	validate(definition: IShaderDefinition): Promise<void>;
+}
+
 export interface IDemoDefinition {
 	shader: IShaderDefinition;
 	compilation: ICompilationDefinition;
@@ -130,4 +136,5 @@ export interface IContext {
 	audioSynthesizer?: IAudioSynthesizer;
 	shaderProvider: IShaderProvider;
 	shaderMinifier?: IShaderMinifier;
+	codeValidator?: ICodeValidator;
 }

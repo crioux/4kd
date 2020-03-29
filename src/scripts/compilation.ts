@@ -101,7 +101,7 @@ export async function compile(context: IContext, demo: IDemoDefinition) {
 					obj,
 					asmSource.source,
 				]);
-
+				
 				return spawn(config.get('tools:nasm'), args);
 			})
 		),

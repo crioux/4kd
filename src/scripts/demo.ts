@@ -174,6 +174,14 @@ export async function provideDemo(context: IContext): Promise<IDemoDefinition> {
 		}
 	});
 
+	if (shader.glslVersion) {
+		shader.prologCode = `#version ${shader.glslVersion}\n`;
+	}
+
+	if (context.codeValidator) {
+		await context.codeValidator.validate(shader);
+	}
+
 	if (context.shaderMinifier) {
 		await context.shaderMinifier.minify(shader);
 	}
@@ -197,9 +205,6 @@ export async function provideDemo(context: IContext): Promise<IDemoDefinition> {
 		}
 	});
 
-	if (shader.glslVersion) {
-		shader.prologCode = `#version ${shader.glslVersion}\n`;
-	}
 
 	shader.commonCode =
 		Object.keys(shader.uniformArrays)

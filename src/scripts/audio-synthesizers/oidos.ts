@@ -1,5 +1,5 @@
 import { Provider } from 'nconf';
-import { join } from 'path';
+import { join, sep } from 'path';
 
 import { IAudioSynthesizer, ICompilationDefinition } from '../definitions';
 import { addHooks } from '../hooks';
@@ -47,10 +47,12 @@ export class OidosAudioSynthesizer implements IAudioSynthesizer {
 
 		compilation.asm.sources[join(buildDirectory, 'oidos.obj')] = {
 			dependencies: [join(buildDirectory, 'music.asm')],
+			includes: ['-i', join(this.config.get('tools:oidos'), 'player') + sep],
 			source: join(this.config.get('tools:oidos'), 'player', 'oidos.asm'),
 		};
 
 		compilation.asm.sources[join(buildDirectory, 'random.obj')] = {
+			includes: ['-i', join(this.config.get('tools:oidos'), 'player') + sep],
 			source: join(this.config.get('tools:oidos'), 'player', 'random.asm'),
 		};
 	}

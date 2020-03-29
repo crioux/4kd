@@ -5,16 +5,34 @@ import { IContext, IDemoDefinition } from './definitions';
 import { replaceHooks } from './hooks';
 import { forEachMatch } from './lib';
 
+
 export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	const buildDirectory: string = context.config.get('paths:build');
 
-	function escape(str: string) {
+	function c_escape(str: string) {
 		return str
 			.replace(/\n/g, '\\n')
 			.replace(/\r/g, '')
-			.replace(/"/g, '\\"');
+			.replace(/\t/g, '\\t')
+			.replace(/"/g, '\\"')
 	}
 
+	function c_stringify(str: string): string {
+		const maxlen = 64;
+		let out = "\""
+		let offset = 0;
+		while(str.slice(offset).length > maxlen)
+		{
+			out += c_escape(str.slice(offset, offset + maxlen)) + "\"\n\""
+			offset += maxlen
+		}
+		if(str.slice(offset).length > 0 ) {
+			out += c_escape(str.slice(offset))
+		}
+		out += "\""
+		return out
+	}
+	
 	const fileContents = ['#pragma once', ''];
 
 	if (context.config.get('debug')) {
@@ -60,7 +78,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	});
 
 	fileContents.push(
-		'#define DEBUG_DISPLAY_UNIFORM_LOATIONS(PROGRAM) \\',
+		'#define DEBUG_DISPLAY_UNIFORM_LOCATIONS(PROGRAM) \\',
 		debugDisplayUniformLocations
 	);
 
@@ -98,7 +116,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	if (prologCode) {
 		fileContents.push(
 			'#define HAS_SHADER_PROLOG_CODE',
-			`static const char *shaderPrologCode = "${escape(prologCode)}";`,
+			`static const char *shaderPrologCode = ${c_stringify(prologCode)};`,
 			''
 		);
 	}
@@ -106,9 +124,9 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	if (vertexSpecificCode) {
 		fileContents.push(
 			'#define HAS_SHADER_VERTEX_SPECIFIC_CODE',
-			`static const char *shaderVertexSpecificCode = "${escape(
+			`static const char *shaderVertexSpecificCode = ${c_stringify(
 				vertexSpecificCode
-			)}";`,
+			)};`,
 			''
 		);
 	}
@@ -116,9 +134,9 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	if (fragmentSpecificCode) {
 		fileContents.push(
 			'#define HAS_SHADER_FRAGMENT_SPECIFIC_CODE',
-			`static const char *shaderFragmentSpecificCode = "${escape(
+			`static const char *shaderFragmentSpecificCode = ${c_stringify(
 				fragmentSpecificCode
-			)}";`,
+			)};`,
 			''
 		);
 	}
@@ -126,7 +144,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	if (commonCode) {
 		fileContents.push(
 			'#define HAS_SHADER_COMMON_CODE',
-			`static const char *shaderCommonCode = "${escape(commonCode)}";`,
+			`static const char *shaderCommonCode = ${c_stringify(commonCode)};`,
 			''
 		);
 	}
@@ -138,7 +156,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 		if (pass.vertexCode) {
 			fileContents.push(
 				`#define HAS_SHADER_PASS_${index}_VERTEX_CODE`,
-				`"${escape(pass.vertexCode)}",`
+				`${c_stringify(pass.vertexCode)},`
 			);
 		} else {
 			fileContents.push('nullptr,');
@@ -147,7 +165,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 		if (pass.fragmentCode) {
 			fileContents.push(
 				`#define HAS_SHADER_PASS_${index}_FRAGMENT_CODE`,
-				`"${escape(pass.fragmentCode)}",`
+				`${c_stringify(pass.fragmentCode)},`
 			);
 		} else {
 			fileContents.push('nullptr,');

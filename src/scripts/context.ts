@@ -12,15 +12,17 @@ import {
 	IContext,
 	IContextOptions,
 	IShaderMinifier,
+	ICodeValidator,
 	IShaderProvider,
 } from './definitions';
 import { ShaderMinifierShaderMinifier } from './shader-minifiers/shader-minifier';
+import { GLSLangValidatorCodeValidator } from './code-validators/glslang-validator';
 import { SimpleShaderProvider } from './shader-providers/simple';
 import { SynthclipseShaderProvider } from './shader-providers/synthclipse';
 
 export function provideContext(options: IContextOptions): IContext {
 	const config = new Provider();
-
+	const debug = typeof options.debug !== 'undefined' ? options.debug : false
 	config.set('capture', options.capture);
 
 	config
@@ -29,7 +31,7 @@ export function provideContext(options: IContextOptions): IContext {
 		.argv({
 			debug: {
 				alias: 'd',
-				default: typeof options.debug !== 'undefined' ? options.debug : false,
+				default: debug,
 				type: 'boolean',
 			},
 			directory: {
@@ -39,6 +41,12 @@ export function provideContext(options: IContextOptions): IContext {
 			},
 			minify: {
 				alias: 'm',
+				//default: !debug,
+				default: true,
+				type: 'boolean',
+			},
+			validate: {
+				alias: 'v',
 				default: true,
 				type: 'boolean',
 			},
@@ -155,6 +163,19 @@ export function provideContext(options: IContextOptions): IContext {
 		}
 	}
 
+	let codeValidator: ICodeValidator | undefined;
+	if (config.get('validate')) {
+		switch (config.get('demo:code-validator:tool') || 'glslangValidator') {
+			case 'glslangValidator':
+				codeValidator = new GLSLangValidatorCodeValidator(config);
+				break;
+
+			default:
+				throw new Error('Config key "demo:shader-minifier:tool" is not valid.');
+		}
+	}
+
+
 	config.defaults({
 		cl: {
 			args: config.get('debug')
@@ -198,7 +219,14 @@ export function provideContext(options: IContextOptions): IContext {
 				{},
 				shaderMinifier && shaderMinifier.getDefaultConfig()
 			),
-			'shader-provider': Object.assign({}, shaderProvider.getDefaultConfig()),
+			'code-validator': Object.assign(
+				{},
+				codeValidator && codeValidator.getDefaultConfig()
+			),
+			'shader-provider': Object.assign(
+				{}, 
+				shaderProvider.getDefaultConfig()
+			),
 		},
 		link: {
 			args: [
@@ -235,6 +263,7 @@ export function provideContext(options: IContextOptions): IContext {
 			nasm: 'nasm',
 			// oidos
 			python2: 'python',
+			glslangValidator: 'glslangValidator'
 		},
 	});
 
@@ -269,11 +298,16 @@ export function provideContext(options: IContextOptions): IContext {
 	if (shaderMinifier) {
 		shaderMinifier.checkConfig();
 	}
+	
+	if (codeValidator) {
+		codeValidator.checkConfig();
+	}
 
 	return {
 		audioSynthesizer,
 		config,
 		shaderMinifier,
+		codeValidator,
 		shaderProvider,
 	};
 }

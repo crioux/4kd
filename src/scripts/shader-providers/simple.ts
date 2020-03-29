@@ -1,4 +1,3 @@
-import { readFile } from 'fs-extra';
 import { Provider } from 'nconf';
 import { join } from 'path';
 
@@ -9,6 +8,7 @@ import {
 } from '../definitions';
 import { forEachMatch } from '../lib';
 import { addConstant, addRegular, addUniform } from '../variables';
+import { processIncludes } from '../include';
 
 export class SimpleShaderProvider implements IShaderProvider {
 	private config: Provider;
@@ -30,10 +30,9 @@ export class SimpleShaderProvider implements IShaderProvider {
 	async provide(definition: IShaderDefinition) {
 		const demoDirectory: string = this.config.get('directory');
 
-		const shaderContents = await readFile(
-			join(demoDirectory, this.config.get('demo:shader-provider:filename')),
-			'utf8'
-		);
+		const shaderFile = join(demoDirectory, this.config.get('demo:shader-provider:filename'));
+		const shaderContents = await processIncludes(shaderFile);
+		console.log("Processing shader file: " + shaderFile)
 
 		const versionMatch = shaderContents.match(/#version (.+)$/m);
 		if (versionMatch) {

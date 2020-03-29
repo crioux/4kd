@@ -89,7 +89,7 @@ export async function clean() {
 
 export async function dev() {
 	const context = provideContext({
-		debug: true,
+		debug: true
 	});
 
 	await buildWithContext(context);

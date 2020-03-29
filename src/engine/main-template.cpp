@@ -130,7 +130,7 @@ void main()
 
 #ifdef DEBUG
 	std::cout << "Uniform locations:" << std::endl;
-	DEBUG_DISPLAY_UNIFORM_LOATIONS(program);
+	DEBUG_DISPLAY_UNIFORM_LOCATIONS(program);
 	std::cout << std::endl;
 #endif
 
@@ -213,7 +213,7 @@ void main()
 
 #ifdef DEBUG
 		std::cout << "Uniform locations in pass " << i << ":" << std::endl;
-		DEBUG_DISPLAY_UNIFORM_LOATIONS(programs[i]);
+		DEBUG_DISPLAY_UNIFORM_LOCATIONS(programs[i]);
 		std::cout << std::endl;
 #endif
 

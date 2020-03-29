@@ -59,7 +59,7 @@ rustup target add i686-pc-windows-msvc
 
 pip install py2exe_py2
 
-pushd %ROOTDIR%\Oidos
+pushd %ROOTDIR%\ext\oidos
 start /i /b /wait cmd /c bash ./makedist.sh
 popd
 
@@ -75,7 +75,7 @@ echo tools: ^
 
   shader-minifier: "%ROOTDIR:\=\\%\\tools\\shader_minifier.exe"^
 
-  oidos: "%ROOTDIR:\=\\%\\Oidos\\dist\\Oidos"^
+  oidos: "%ROOTDIR:\=\\%\\ext\\oidos\\dist\\Oidos"^
 
   glslangValidator: "%ROOTDIR:\=\\%\\tools\\glslangValidator.exe"^
 

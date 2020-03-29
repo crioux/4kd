@@ -13,10 +13,31 @@ IF NOT EXIST "%VSDEVCMD%" (
   goto end
 )
 
+echo ** Finding npm.cmd
+FOR %%X IN (npm.cmd) DO (SET NPM_FOUND=%%~$PATH:X)
+IF NOT DEFINED NPM_FOUND (
+   echo "npm.cmd is required but it's not installed. Install NodeJS and ensure it is in your path. Aborting."
+   goto end
+)
+echo    =^> !NPM_FOUND!
+
+echo ** Finding node.exe
+FOR %%X IN (node.exe) DO (SET NODE_FOUND=%%~$PATH:X)
+IF NOT DEFINED NODE_FOUND (
+   echo "node.exe is required but it's not installed. Install NodeJS and ensure it is in your path. Aborting."
+   goto end
+)
+echo    =^> !NODE_FOUND!
+
+node -e console.log(process.versions.node.split('.')[0]^>=13) | findstr /C:"false" >nul && (
+  echo It looks like you aren't using Node v13.0.0 or greater
+  goto end
+)
+
 echo ** Finding cargo.exe
 FOR %%X IN (cargo.exe) DO (SET CARGO_FOUND=%%~$PATH:X)
 IF NOT DEFINED CARGO_FOUND (
-   echo "Cargo.exe is required but it's not installed. Install Rust and ensure it is in your path. Aborting."
+   echo "cargo.exe is required but it's not installed. Install Rust and ensure it is in your path. Aborting."
    goto end
 )
 echo    =^> !CARGO_FOUND!
@@ -24,7 +45,7 @@ echo    =^> !CARGO_FOUND!
 echo ** Finding python.exe
 FOR %%X IN (python.exe) DO (SET PYTHON_FOUND=%%~$PATH:X)
 IF NOT DEFINED PYTHON_FOUND (
-    echo PYTHON is required it's not installed. Install Python 2.7 or higher. Aborting.
+    echo python.exe is required it's not installed. Install Python 2.7 or higher. Aborting.
     goto end
 )
 python -c "import platform; print platform.system()" | findstr /V /C:"Windows" >nul && (
@@ -80,6 +101,16 @@ echo tools: ^
   glslangValidator: "%ROOTDIR:\=\\%\\tools\\glslangValidator.exe"^
 
 > %ROOTDIR%\src\demo\config.local.yml
+
+REM #############################################
+
+echo Installing NPM packages...
+
+pushd %ROOTDIR%\\src
+npm install
+popd
+
+REM #############################################
 
 echo Done!
 

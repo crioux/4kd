@@ -3,6 +3,8 @@ import {
 	SpawnOptionsWithoutStdio,
 } from 'child_process';
 
+import { lstat, mkdir, readdir, rmdir, unlink } from 'fs-extra';
+import { join } from 'path';
 import { IContext } from './definitions';
 
 export interface ICleanDirectoryOptions {
@@ -15,19 +17,18 @@ export async function cleanDirectory(
 	options: ICleanDirectoryOptions = {}
 ): Promise<boolean> {
 	const { removeContentOnly = false, skipDotFiles = false } = options;
-	const { promisify } = require('util');
-	const path = require('path');
-	const fs = require('fs');
-	const readdirAsync = promisify(fs.readdir);
-	const unlinkAsync = promisify(fs.unlink);
-	const rmdirAsync = promisify(fs.rmdir);
-	const lstatAsync = promisify(fs.lstat); // fs.lstat can detect symlinks, fs.stat can't
 
 	let files;
 
 	try {
-		files = await readdirAsync(dirPath);
+		files = await readdir(dirPath);
 	} catch (e) {
+		if (e.code === 'ENOENT') {
+			if (removeContentOnly) {
+				await mkdir(dirPath);
+			}
+			return true;
+		}
 		throw new Error(e);
 	}
 
@@ -40,8 +41,8 @@ export async function cleanDirectory(
 				continue;
 			}
 
-			const filePath = path.join(dirPath, fileName);
-			const fileStat = await lstatAsync(filePath);
+			const filePath = join(dirPath, fileName);
+			const fileStat = await lstat(filePath);
 			const isDir = fileStat.isDirectory();
 
 			if (isDir) {
@@ -51,18 +52,18 @@ export async function cleanDirectory(
 				};
 				const subdirclean = await cleanDirectory(filePath, suboptions);
 				if (subdirclean) {
-					await rmdirAsync(dirPath);
+					await rmdir(dirPath);
 				} else {
 					clean = false;
 				}
 			} else {
-				await unlinkAsync(filePath);
+				await unlink(filePath);
 			}
 		}
 	}
 
 	if (!removeContentOnly) {
-		await rmdirAsync(dirPath);
+		await rmdir(dirPath);
 	}
 
 	return clean;

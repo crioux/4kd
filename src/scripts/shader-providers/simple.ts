@@ -1,6 +1,6 @@
 import { readFile } from 'fs-extra';
 import { Provider } from 'nconf';
-import { basename, join } from 'path';
+import { basename, join, resolve } from 'path';
 
 import {
 	IAnnotations,
@@ -28,13 +28,16 @@ export class SimpleShaderProvider implements IShaderProvider {
 	}
 
 	async processIncludes(inputFile: string): Promise<string> {
-		const outFile = join(
-			this.config.get('paths:build'),
-			basename(inputFile) + '.pp'
+		const outFile = resolve(
+			join(this.config.get('paths:build'), basename(inputFile) + '.pp')
 		);
+		const absInFile = resolve(inputFile);
 		const pcpp: string = this.config.get('tools:pcpp');
+		const demoDirectory: string = this.config.get('directory');
 
-		await spawn(pcpp, ['--passthru-comments', '-o', outFile, inputFile]);
+		await spawn(pcpp, ['--passthru-comments', '-o', outFile, absInFile], {
+			cwd: demoDirectory,
+		});
 		return readFile(outFile, 'utf8');
 	}
 

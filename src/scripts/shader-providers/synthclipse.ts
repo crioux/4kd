@@ -35,7 +35,7 @@ export class SynthclipseShaderProvider implements IShaderProvider {
 		);
 		const pcpp: string = this.config.get('tools:pcpp');
 
-		await spawn(pcpp, [inputFile, '-o', outFile]);
+		await spawn(pcpp, ['--passthru-comments', '-o', outFile, inputFile]);
 		return readFile(outFile, 'utf8');
 	}
 

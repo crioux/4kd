@@ -2,7 +2,7 @@ import { writeFile } from 'fs-extra';
 import { Provider } from 'nconf';
 import { join } from 'path';
 
-import { IShaderDefinition, ICodeValidator, IPass } from '../definitions';
+import { ICodeValidator, IPass, IShaderDefinition } from '../definitions';
 import { spawn } from '../lib';
 
 export class GLSLangValidatorCodeValidator implements ICodeValidator {
@@ -20,19 +20,26 @@ export class GLSLangValidatorCodeValidator implements ICodeValidator {
 		this.config.required(['tools:glslangValidator']);
 	}
 
-  async validatePass(definition: IShaderDefinition, mode:number, passName: IPass, index:number): Promise<void> {
-    const { variables } = definition;
+	async validatePass(
+		definition: IShaderDefinition,
+		mode: number,
+		passName: IPass,
+		index: number
+	): Promise<void> {
+		const { variables } = definition;
 
-    const buildDirectory: string = this.config.get('paths:build');
-    const ext = mode==0?'vert':'frag';
-    const input = join(buildDirectory, 'validate_p'+index+'.'+ext);
-    
-    console.log("Validing pass #" + index + " " + ext + " shader: "+input);
+		const buildDirectory: string = this.config.get('paths:build');
+		const ext = mode === 0 ? 'vert' : 'frag';
+		const input = join(buildDirectory, 'validate_p' + index + '.' + ext);
+
+		console.log('Validing pass #' + index + ' ' + ext + ' shader: ' + input);
 
 		const shaderLines = [];
-		if(definition.prologCode) {
-			shaderLines.push(definition.prologCode);	
+
+		if (definition.prologCode) {
+			shaderLines.push(definition.prologCode);
 		}
+		shaderLines.push('#extension GL_GOOGLE_include_directive : enable');
 		shaderLines.push('// Uniform arrays', '');
 
 		Object.keys(definition.uniformArrays).forEach((type) => {
@@ -88,79 +95,68 @@ export class GLSLangValidatorCodeValidator implements ICodeValidator {
 
 		shaderLines.push('', '#pragma separator', '', definition.commonCode);
 
-    if (mode==0) {
-      if(!passName.vertexCode) {
-        throw new Error("vertex code shouldn't be null");
-      }
-      shaderLines.push(
-        '',
-        '#pragma separator',
-        `// Pass ${index} vertex`,
-        ''
-      );
-      shaderLines.push(passName.vertexCode);
-    }
+		if (mode === 0) {
+			if (!passName.vertexCode) {
+				throw new Error("vertex code shouldn't be null");
+			}
+			shaderLines.push('', '#pragma separator', `// Pass ${index} vertex`, '');
+			shaderLines.push(passName.vertexCode);
+		}
 
-    if (mode==1) {
-      if(!passName.fragmentCode) {
-        throw new Error("fragment code shouldn't be null");
-      }
-      shaderLines.push(
-        '',
-        '#pragma separator',
-        `// Pass ${index} fragment`,
-        ''
-      );
-      shaderLines.push(passName.fragmentCode);
-    }
+		if (mode === 1) {
+			if (!passName.fragmentCode) {
+				throw new Error("fragment code shouldn't be null");
+			}
+			shaderLines.push(
+				'',
+				'#pragma separator',
+				`// Pass ${index} fragment`,
+				''
+			);
+			shaderLines.push(passName.fragmentCode);
+		}
 
 		await writeFile(input, shaderLines.join('\n'));
 
 		const glslangValidatorPath = this.config.get('tools:glslangValidator');
 
-    const args = [
-      input
-    ];
+		const args = [input];
 
-    return spawn(glslangValidatorPath, args);
-  }
-
+		return spawn(glslangValidatorPath, args);
+	}
 
 	async validate(definition: IShaderDefinition) {
-    
-    let fail = false ;
+		let fail = false;
 
-    interface IPassElement {
-      passName: IPass;
-      index: number;
-    };
-    let passes : Array<IPassElement> = [];
-    definition.passes.forEach((passName, index) => {
-      passes.push({passName:passName, index:index})
-    });
+		interface IPassElement {
+			passName: IPass;
+			index: number;
+		}
+		const passes: IPassElement[] = [];
+		definition.passes.forEach((passName, index) => {
+			passes.push({ passName, index });
+		});
 
-    for(const pass of passes) {
+		for (const pass of passes) {
 			if (pass.passName.vertexCode) {
-        try {
-          await this.validatePass(definition,0,pass.passName,pass.index);
-        }
-        catch(error) {
-          fail = true;
-        }
+				try {
+					await this.validatePass(definition, 0, pass.passName, pass.index);
+				} catch (error) {
+					fail = true;
+				}
 			}
 			if (pass.passName.fragmentCode) {
-        try {
-          await this.validatePass(definition,1,pass.passName,pass.index);
-        }
-        catch(error) {
-          fail = true;
-        }
+				try {
+					await this.validatePass(definition, 1, pass.passName, pass.index);
+				} catch (error) {
+					fail = true;
+				}
 			}
 		}
 
-    if(fail) {
-      console.log("Validation errors. Stopping.");
-      process.exit(1)
-    }
+		if (fail) {
+			console.log('Validation errors. Stopping.');
+			process.exit(1);
+		}
 	}
 }

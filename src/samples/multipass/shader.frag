@@ -9,9 +9,6 @@ uniform sampler2D firstPassTexture;
 
 const float PI = 3.14;//! replace
 
-vec4 _gl_Position;
-#define gl_Position _gl_Position
-
 #pragma attributes
 
 vec3 aPosition;

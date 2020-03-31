@@ -7,22 +7,22 @@ import { VierKlangAudioSynthesizer } from './audio-synthesizers/4klang';
 import { AchtKlangAudioSynthesizer } from './audio-synthesizers/8klang';
 import { OidosAudioSynthesizer } from './audio-synthesizers/oidos';
 import { RealtimeAudioSynthesizer } from './audio-synthesizers/realtime';
+import { GLSLangValidatorCodeValidator } from './code-validators/glslang-validator';
 import {
 	IAudioSynthesizer,
+	ICodeValidator,
 	IContext,
 	IContextOptions,
 	IShaderMinifier,
-	ICodeValidator,
 	IShaderProvider,
 } from './definitions';
 import { ShaderMinifierShaderMinifier } from './shader-minifiers/shader-minifier';
-import { GLSLangValidatorCodeValidator } from './code-validators/glslang-validator';
 import { SimpleShaderProvider } from './shader-providers/simple';
 import { SynthclipseShaderProvider } from './shader-providers/synthclipse';
 
 export function provideContext(options: IContextOptions): IContext {
 	const config = new Provider();
-	const debug = typeof options.debug !== 'undefined' ? options.debug : false
+	const debug = typeof options.debug !== 'undefined' ? options.debug : false;
 	config.set('capture', options.capture);
 
 	config
@@ -41,12 +41,7 @@ export function provideContext(options: IContextOptions): IContext {
 			},
 			minify: {
 				alias: 'm',
-				//default: !debug,
-				default: true,
-				type: 'boolean',
-			},
-			validate: {
-				alias: 'v',
+				// default: !debug,
 				default: true,
 				type: 'boolean',
 			},
@@ -57,6 +52,11 @@ export function provideContext(options: IContextOptions): IContext {
 			},
 			server: {
 				alias: 's',
+				default: true,
+				type: 'boolean',
+			},
+			validate: {
+				alias: 'v',
 				default: true,
 				type: 'boolean',
 			},
@@ -175,7 +175,6 @@ export function provideContext(options: IContextOptions): IContext {
 		}
 	}
 
-
 	config.defaults({
 		cl: {
 			args: config.get('debug')
@@ -203,6 +202,10 @@ export function provideContext(options: IContextOptions): IContext {
 				audioSynthesizer && audioSynthesizer.getDefaultConfig()
 			),
 			closeWhenFinished: false,
+			'code-validator': Object.assign(
+				{},
+				codeValidator && codeValidator.getDefaultConfig()
+			),
 			gl: {
 				constants: [],
 				functions: [],
@@ -219,14 +222,7 @@ export function provideContext(options: IContextOptions): IContext {
 				{},
 				shaderMinifier && shaderMinifier.getDefaultConfig()
 			),
-			'code-validator': Object.assign(
-				{},
-				codeValidator && codeValidator.getDefaultConfig()
-			),
-			'shader-provider': Object.assign(
-				{}, 
-				shaderProvider.getDefaultConfig()
-			),
+			'shader-provider': Object.assign({}, shaderProvider.getDefaultConfig()),
 		},
 		link: {
 			args: [
@@ -259,11 +255,12 @@ export function provideContext(options: IContextOptions): IContext {
 			crinkler: 'crinkler',
 			ffmpeg: 'ffmpeg',
 			// glew
+			glslangValidator: 'glslangValidator',
 			mono: 'mono',
 			nasm: 'nasm',
 			// oidos
+			pcpp: 'pcpp',
 			python2: 'python',
-			glslangValidator: 'glslangValidator'
 		},
 	});
 
@@ -298,16 +295,16 @@ export function provideContext(options: IContextOptions): IContext {
 	if (shaderMinifier) {
 		shaderMinifier.checkConfig();
 	}
-	
+
 	if (codeValidator) {
 		codeValidator.checkConfig();
 	}
 
 	return {
 		audioSynthesizer,
+		codeValidator,
 		config,
 		shaderMinifier,
-		codeValidator,
 		shaderProvider,
 	};
 }

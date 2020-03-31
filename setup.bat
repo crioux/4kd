@@ -100,6 +100,8 @@ echo tools: ^
 
   glslangValidator: "%ROOTDIR:\=\\%\\tools\\glslangValidator.exe"^
 
+  pcpp: "%ROOTDIR:\=\\%\\tools\\pcpp.exe"^
+
 > %ROOTDIR%\src\demo\config.local.yml
 
 REM #############################################

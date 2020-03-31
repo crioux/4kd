@@ -131,10 +131,9 @@ export interface IConfig {
 }
 
 export interface IContext {
-	config: IConfig;
-
 	audioSynthesizer?: IAudioSynthesizer;
-	shaderProvider: IShaderProvider;
-	shaderMinifier?: IShaderMinifier;
 	codeValidator?: ICodeValidator;
+	config: IConfig;
+	shaderMinifier?: IShaderMinifier;
+	shaderProvider: IShaderProvider;
 }

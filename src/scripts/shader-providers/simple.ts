@@ -1,14 +1,14 @@
+import { readFile } from 'fs-extra';
 import { Provider } from 'nconf';
-import { join } from 'path';
+import { basename, join } from 'path';
 
 import {
 	IAnnotations,
 	IShaderDefinition,
 	IShaderProvider,
 } from '../definitions';
-import { forEachMatch } from '../lib';
+import { forEachMatch, spawn } from '../lib';
 import { addConstant, addRegular, addUniform } from '../variables';
-import { processIncludes } from '../include';
 
 export class SimpleShaderProvider implements IShaderProvider {
 	private config: Provider;
@@ -27,12 +27,26 @@ export class SimpleShaderProvider implements IShaderProvider {
 		this.config.required(['demo:shader-provider:filename']);
 	}
 
+	async processIncludes(inputFile: string): Promise<string> {
+		const outFile = join(
+			this.config.get('paths:build'),
+			basename(inputFile) + '.pp'
+		);
+		const pcpp: string = this.config.get('tools:pcpp');
+
+		await spawn(pcpp, [inputFile, '-o', outFile]);
+		return readFile(outFile, 'utf8');
+	}
+
 	async provide(definition: IShaderDefinition) {
 		const demoDirectory: string = this.config.get('directory');
 
-		const shaderFile = join(demoDirectory, this.config.get('demo:shader-provider:filename'));
-		const shaderContents = await processIncludes(shaderFile);
-		console.log("Processing shader file: " + shaderFile)
+		const shaderFile = join(
+			demoDirectory,
+			this.config.get('demo:shader-provider:filename')
+		);
+		const shaderContents = await this.processIncludes(shaderFile);
+		console.log('Processing shader file: ' + shaderFile);
 
 		const versionMatch = shaderContents.match(/#version (.+)$/m);
 		if (versionMatch) {

@@ -216,11 +216,12 @@ void main()
 		std::cout << std::endl;
 #endif
 	}
-#endif
 
 #ifdef SERVER
 	startServerOptions.programs = programs;
 	serverStart(startServerOptions);
+#endif
+
 #endif
 
 #ifdef HAS_HOOK_INITIALIZE

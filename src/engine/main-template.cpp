@@ -59,8 +59,7 @@ void main()
 	// std::cout << "OpenGL extensions: " << glGetString(GL_EXTENSIONS) << std::endl;
 	std::cout << std::endl;
 
-	//TODO : here we set a callback function for GL to use when an error is encountered. Does not seem to work !
-	
+	// Set a callback function for GL to use when an error is encountered
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(showDebugMessageFromOpenGL, NULL);
@@ -216,14 +215,11 @@ void main()
 		DEBUG_DISPLAY_UNIFORM_LOCATIONS(programs[i]);
 		std::cout << std::endl;
 #endif
-
-#ifdef SERVER
-		startServerOptions.programs = programs;
-#endif
 	}
 #endif
 
 #ifdef SERVER
+	startServerOptions.programs = programs;
 	serverStart(startServerOptions);
 #endif
 

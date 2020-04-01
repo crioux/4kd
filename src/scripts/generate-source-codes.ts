@@ -1,35 +1,37 @@
-import { readFile, writeFile } from 'fs-extra';
 import { join } from 'path';
+import { readFile, writeFile } from 'fs-extra';
 
 import { IContext, IDemoDefinition } from './definitions';
 import { replaceHooks } from './hooks';
 import { forEachMatch } from './lib';
 
-export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
+export const writeDemoData = async (
+	context: IContext,
+	demo: IDemoDefinition
+): Promise<void> => {
 	const buildDirectory: string = context.config.get('paths:build');
 
-	function c_escape(str: string) {
-		return str
+	const cEscape = (str: string): string =>
+		str
 			.replace(/\n/g, '\\n')
 			.replace(/\r/g, '')
 			.replace(/\t/g, '\\t')
 			.replace(/"/g, '\\"');
-	}
 
-	function c_stringify(str: string): string {
+	const cStringify = (str: string): string => {
 		const maxlen = 64;
 		let out = '"';
 		let offset = 0;
 		while (str.slice(offset).length > maxlen) {
-			out += c_escape(str.slice(offset, offset + maxlen)) + '"\n"';
+			out += cEscape(str.slice(offset, offset + maxlen)) + '"\n"';
 			offset += maxlen;
 		}
 		if (str.slice(offset).length > 0) {
-			out += c_escape(str.slice(offset));
+			out += cEscape(str.slice(offset));
 		}
 		out += '"';
 		return out;
-	}
+	};
 
 	const fileContents = ['#pragma once', ''];
 
@@ -47,7 +49,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 
 	let debugDisplayUniformLocations = '';
 
-	Object.keys(demo.shader.uniformArrays).forEach((type) => {
+	Object.keys(demo.shader.uniformArrays).forEach(type => {
 		const uniformArray = demo.shader.uniformArrays[type];
 
 		const typeUpperCase = type.toUpperCase();
@@ -55,17 +57,17 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 		const countMacro = `${typeUpperCase}_UNIFORM_COUNT`;
 		const arrayName = `${type}Uniforms`;
 		const cppType = type.startsWith('sampler') ? 'int' : type;
+		const shaderName = uniformArray.minifiedName || uniformArray.name;
 
 		fileContents.push(
-			`#define ${nameMacro} "${uniformArray.minifiedName ||
-				uniformArray.name}"`,
+			`#define ${nameMacro} "${shaderName}"`,
 			`#define ${countMacro} ${uniformArray.variables.length}`,
 			`static ${cppType} ${arrayName}[${countMacro}];`
 		);
 
 		uniformArray.variables.forEach((variable, index) => {
 			const name = variable.name
-				.replace(/^\w|\b\w/g, (letter) => letter.toUpperCase())
+				.replace(/^\w|\b\w/g, letter => letter.toUpperCase())
 				.replace(/_+/g, '');
 			fileContents.push(`#define uniform${name} ${arrayName}[${index}]`);
 		});
@@ -74,7 +76,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 
 		debugDisplayUniformLocations += `std::cout << "${type} "${nameMacro}": " << glGetUniformLocation(PROGRAM, ${nameMacro}) << std::endl; \\\n`;
 		uniformArray.variables.forEach((_variable, index) => {
-			debugDisplayUniformLocations += `std::cout << "  ${type} ${arrayName}[${index}]: " << glGetUniformLocation(PROGRAM, \"${arrayName}[${index}]\") << std::endl; \\\n`;
+			debugDisplayUniformLocations += `std::cout << "  ${type} "${nameMacro}"[${index}]: " << glGetUniformLocation(PROGRAM, ${nameMacro}\"[${index}]\") << std::endl; \\\n`;
 		});
 	});
 
@@ -91,20 +93,20 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	let fragmentSpecificCode = '';
 
 	if (demo.shader.attributesCode) {
-		forEachMatch(stageVariableRegExp, demo.shader.attributesCode, (match) => {
+		forEachMatch(stageVariableRegExp, demo.shader.attributesCode, match => {
 			vertexSpecificCode += 'in ' + match[0];
 		});
 	}
 
 	if (demo.shader.varyingsCode) {
-		forEachMatch(stageVariableRegExp, demo.shader.varyingsCode, (match) => {
+		forEachMatch(stageVariableRegExp, demo.shader.varyingsCode, match => {
 			vertexSpecificCode += 'out ' + match[0];
 			fragmentSpecificCode += 'in ' + match[0];
 		});
 	}
 
 	if (demo.shader.outputsCode) {
-		forEachMatch(stageVariableRegExp, demo.shader.outputsCode, (match) => {
+		forEachMatch(stageVariableRegExp, demo.shader.outputsCode, match => {
 			fragmentSpecificCode += 'out ' + match[0];
 		});
 	}
@@ -117,7 +119,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	if (prologCode) {
 		fileContents.push(
 			'#define HAS_SHADER_PROLOG_CODE',
-			`static const char *shaderPrologCode = ${c_stringify(prologCode)};`,
+			`static const char *shaderPrologCode = ${cStringify(prologCode)};`,
 			''
 		);
 	}
@@ -125,7 +127,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	if (vertexSpecificCode) {
 		fileContents.push(
 			'#define HAS_SHADER_VERTEX_SPECIFIC_CODE',
-			`static const char *shaderVertexSpecificCode = ${c_stringify(
+			`static const char *shaderVertexSpecificCode = ${cStringify(
 				vertexSpecificCode
 			)};`,
 			''
@@ -135,7 +137,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	if (fragmentSpecificCode) {
 		fileContents.push(
 			'#define HAS_SHADER_FRAGMENT_SPECIFIC_CODE',
-			`static const char *shaderFragmentSpecificCode = ${c_stringify(
+			`static const char *shaderFragmentSpecificCode = ${cStringify(
 				fragmentSpecificCode
 			)};`,
 			''
@@ -145,7 +147,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	if (commonCode) {
 		fileContents.push(
 			'#define HAS_SHADER_COMMON_CODE',
-			`static const char *shaderCommonCode = ${c_stringify(commonCode)};`,
+			`static const char *shaderCommonCode = ${cStringify(commonCode)};`,
 			''
 		);
 	}
@@ -157,7 +159,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 		if (pass.vertexCode) {
 			fileContents.push(
 				`#define HAS_SHADER_PASS_${index}_VERTEX_CODE`,
-				`${c_stringify(pass.vertexCode)},`
+				`${cStringify(pass.vertexCode)},`
 			);
 		} else {
 			fileContents.push('nullptr,');
@@ -166,7 +168,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 		if (pass.fragmentCode) {
 			fileContents.push(
 				`#define HAS_SHADER_PASS_${index}_FRAGMENT_CODE`,
-				`${c_stringify(pass.fragmentCode)},`
+				`${cStringify(pass.fragmentCode)},`
 			);
 		} else {
 			fileContents.push('nullptr,');
@@ -236,7 +238,7 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 		fileContents.push('#define LOADING_BLACK_SCREEN', '');
 	}
 
-	Object.keys(demo.compilation.cpp.hooks).forEach((hookName) => {
+	Object.keys(demo.compilation.cpp.hooks).forEach(hookName => {
 		fileContents.push(`#define HAS_HOOK_${hookName.toUpperCase()}`);
 	});
 
@@ -244,9 +246,9 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 		join(buildDirectory, 'demo-data.hpp'),
 		fileContents.join('\n')
 	);
-}
+};
 
-export async function writeDemoGl(context: IContext) {
+export const writeDemoGl = async (context: IContext): Promise<void> => {
 	const fileContents = [
 		'#pragma once',
 		'',
@@ -273,24 +275,24 @@ export async function writeDemoGl(context: IContext) {
 		'glUseProgram',
 	];
 
-	function addGlConstantName(constantName: string) {
-		if (glConstantNames.indexOf(constantName) === -1) {
+	const addGlConstantName = (constantName: string): void => {
+		if (!glConstantNames.includes(constantName)) {
 			glConstantNames.push(constantName);
 		}
-	}
+	};
 
-	function addGlFunctionName(functionName: string) {
-		if (glFunctionNames.indexOf(functionName) === -1) {
+	const addGlFunctionName = (functionName: string): void => {
+		if (!glFunctionNames.includes(functionName)) {
 			glFunctionNames.push(functionName);
 		}
-	}
+	};
 
-	function addFromConfig(key: string, action: (name: string) => void) {
+	const addFromConfig = (key: string, action: (name: string) => void): void => {
 		const value = context.config.get(key);
 		if (Array.isArray(value)) {
 			value.forEach(action);
 		}
-	}
+	};
 
 	addFromConfig('demo:gl:constants', addGlConstantName);
 	addFromConfig('demo:gl:functions', addGlFunctionName);
@@ -301,8 +303,8 @@ export async function writeDemoGl(context: IContext) {
 	);
 
 	glConstantNames.forEach((constantName: string) => {
-		const match = glewContents.match(
-			new RegExp(`^#define ${constantName} .+$`, 'gm')
+		const match = new RegExp(`^#define ${constantName} .+$`, 'gm').exec(
+			glewContents
 		);
 		if (match) {
 			fileContents.push(match[0]);
@@ -315,9 +317,10 @@ export async function writeDemoGl(context: IContext) {
 
 	glFunctionNames.forEach((functionName, index) => {
 		const typedefName = 'PFN' + functionName.toUpperCase() + 'PROC';
-		const match = glewContents.match(
-			new RegExp(`^typedef \\w+ \\(GLAPIENTRY \\* ${typedefName}\\).+$`, 'gm')
-		);
+		const match = new RegExp(
+			`^typedef \\w+ \\(GLAPIENTRY \\* ${typedefName}\\).+$`,
+			'gm'
+		).exec(glewContents);
 		if (match) {
 			fileContents.push(
 				match[0],
@@ -342,9 +345,12 @@ export async function writeDemoGl(context: IContext) {
 	const buildDirectory: string = context.config.get('paths:build');
 
 	await writeFile(join(buildDirectory, 'demo-gl.hpp'), fileContents.join('\n'));
-}
+};
 
-export async function writeDemoMain(context: IContext, demo: IDemoDefinition) {
+export const writeDemoMain = async (
+	context: IContext,
+	demo: IDemoDefinition
+): Promise<void> => {
 	const buildDirectory: string = context.config.get('paths:build');
 
 	let mainCode = await readFile(join('engine', 'main-template.cpp'), 'utf8');
@@ -352,4 +358,4 @@ export async function writeDemoMain(context: IContext, demo: IDemoDefinition) {
 	mainCode = replaceHooks(demo.compilation.cpp.hooks, mainCode);
 
 	await writeFile(join(buildDirectory, 'main.cpp'), mainCode);
-}
+};

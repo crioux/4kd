@@ -21,6 +21,10 @@ static unsigned int fbo;
 
 #pragma hook initialize
 
+GLint uni_p0_float = glGetUniformLocation(programs[0], FLOAT_UNIFORM_NAME);
+GLint uni_p1_float = glGetUniformLocation(programs[1], FLOAT_UNIFORM_NAME);
+GLint uni_p1_sampler2D = glGetUniformLocation(programs[1], SAMPLER2D_UNIFORM_NAME);
+
 int i = 0;
 for (int index = 0; index < count; ++index)
 {
@@ -105,7 +109,7 @@ checkGLError();
 glUseProgram(programs[0]);
 checkGLError();
 
-glUniform1fv(0, FLOAT_UNIFORM_COUNT, floatUniforms);
+glUniform1fv(uni_p0_float, FLOAT_UNIFORM_COUNT, floatUniforms);
 checkGLError();
 
 glClear(GL_COLOR_BUFFER_BIT); // | GL_DEPTH_BUFFER_BIT);
@@ -131,7 +135,7 @@ checkGLError();
 glUseProgram(programs[1]);
 checkGLError();
 
-glUniform1fv(0, FLOAT_UNIFORM_COUNT, floatUniforms);
+glUniform1fv(uni_p1_float, FLOAT_UNIFORM_COUNT, floatUniforms);
 checkGLError();
 
 glActiveTexture(GL_TEXTURE0 + 0);
@@ -140,7 +144,7 @@ checkGLError();
 glBindTexture(GL_TEXTURE_2D, textureIds[0]);
 checkGLError();
 
-glUniform1i(3, 0);
+glUniform1i(uni_p1_sampler2D, 0);
 checkGLError();
 
 glRects(-1, -1, 1, 1);

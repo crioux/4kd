@@ -41,7 +41,6 @@ export function provideContext(options: IContextOptions): IContext {
 			},
 			minify: {
 				alias: 'm',
-				// default: !debug,
 				default: true,
 				type: 'boolean',
 			},

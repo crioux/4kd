@@ -5,7 +5,6 @@ import { IContext, IDemoDefinition } from './definitions';
 import { replaceHooks } from './hooks';
 import { forEachMatch } from './lib';
 
-
 export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 	const buildDirectory: string = context.config.get('paths:build');
 
@@ -14,25 +13,24 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 			.replace(/\n/g, '\\n')
 			.replace(/\r/g, '')
 			.replace(/\t/g, '\\t')
-			.replace(/"/g, '\\"')
+			.replace(/"/g, '\\"');
 	}
 
 	function c_stringify(str: string): string {
 		const maxlen = 64;
-		let out = "\""
+		let out = '"';
 		let offset = 0;
-		while(str.slice(offset).length > maxlen)
-		{
-			out += c_escape(str.slice(offset, offset + maxlen)) + "\"\n\""
-			offset += maxlen
+		while (str.slice(offset).length > maxlen) {
+			out += c_escape(str.slice(offset, offset + maxlen)) + '"\n"';
+			offset += maxlen;
 		}
-		if(str.slice(offset).length > 0 ) {
-			out += c_escape(str.slice(offset))
+		if (str.slice(offset).length > 0) {
+			out += c_escape(str.slice(offset));
 		}
-		out += "\""
-		return out
+		out += '"';
+		return out;
 	}
-	
+
 	const fileContents = ['#pragma once', ''];
 
 	if (context.config.get('debug')) {
@@ -74,7 +72,10 @@ export async function writeDemoData(context: IContext, demo: IDemoDefinition) {
 
 		fileContents.push('');
 
-		debugDisplayUniformLocations += `std::cout << "${type}: " << glGetUniformLocation(PROGRAM, ${nameMacro}) << std::endl; \\\n`;
+		debugDisplayUniformLocations += `std::cout << "${type} "${nameMacro}": " << glGetUniformLocation(PROGRAM, ${nameMacro}) << std::endl; \\\n`;
+		uniformArray.variables.forEach((_variable, index) => {
+			debugDisplayUniformLocations += `std::cout << "  ${type} ${arrayName}[${index}]: " << glGetUniformLocation(PROGRAM, \"${arrayName}[${index}]\") << std::endl; \\\n`;
+		});
 	});
 
 	fileContents.push(

@@ -60,7 +60,7 @@ void main()
 	std::cout << std::endl;
 
 	//TODO : here we set a callback function for GL to use when an error is encountered. Does not seem to work !
-	/*
+	
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(showDebugMessageFromOpenGL, NULL);
@@ -71,7 +71,7 @@ void main()
 		0,
 		0,
 		true);
-		*/
+		
 #endif
 
 #ifdef SERVER

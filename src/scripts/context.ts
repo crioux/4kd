@@ -1,7 +1,7 @@
+import { dirname, join } from 'path';
 import { pathExistsSync, statSync } from 'fs-extra';
 import { Provider } from 'nconf';
 import * as yaml from 'nconf-yaml';
-import { dirname, join } from 'path';
 
 import { VierKlangAudioSynthesizer } from './audio-synthesizers/4klang';
 import { AchtKlangAudioSynthesizer } from './audio-synthesizers/8klang';
@@ -20,7 +20,7 @@ import { ShaderMinifierShaderMinifier } from './shader-minifiers/shader-minifier
 import { SimpleShaderProvider } from './shader-providers/simple';
 import { SynthclipseShaderProvider } from './shader-providers/synthclipse';
 
-export function provideContext(options: IContextOptions): IContext {
+export const provideContext = (options: IContextOptions): IContext => {
 	const config = new Provider();
 	const debug = typeof options.debug !== 'undefined' ? options.debug : false;
 	config.set('capture', options.capture);
@@ -306,4 +306,4 @@ export function provideContext(options: IContextOptions): IContext {
 		shaderMinifier,
 		shaderProvider,
 	};
-}
+};
